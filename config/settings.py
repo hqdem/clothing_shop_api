@@ -28,6 +28,7 @@ INSTALLED_APPS = [
 
     # 3-rd party
     'debug_toolbar',
+    'rest_framework',
 
     # Local
     'accounts.apps.AccountsConfig',
