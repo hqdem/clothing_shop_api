@@ -13,12 +13,23 @@ class SizeSerializer(serializers.ModelSerializer):
 
 
 class SizeItemCountSerializer(serializers.ModelSerializer):
-    size = SizeSerializer(read_only=True)
+    size = SizeSerializer()
 
     class Meta:
         model = Item.sizes.through
         fields = [
             'id',
+            'size',
+            'item_count'
+        ]
+
+
+class SizeCountSerializer(serializers.ModelSerializer):
+    item_count = serializers.IntegerField()
+
+    class Meta:
+        model = Size
+        fields = [
             'size',
             'item_count'
         ]
