@@ -43,7 +43,7 @@ class SizeItemCount(models.Model):
         verbose_name_plural = 'Количество вещи с размером'
 
     def __str__(self):
-        return self.item_count
+        return str(self.item_count)
 
 
 class ItemImage(models.Model):
@@ -89,8 +89,8 @@ class OrderItem(models.Model):
 
 
 class Order(models.Model):
-    user_email = models.EmailField()
-    user_contacts = models.CharField(max_length=127)
+    user_email = models.EmailField(verbose_name='Email пользователя')
+    user_contacts = models.CharField(max_length=127, verbose_name='Контакты пользователя')
     items = models.ManyToManyField('Item', through='OrderItem')
 
     class Meta:
