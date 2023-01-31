@@ -61,7 +61,7 @@ class ItemImage(models.Model):
 class Item(models.Model):
     name = models.CharField(max_length=127, verbose_name='Наименование вещи')
     category = models.ForeignKey('Category', on_delete=models.PROTECT, related_name='items', verbose_name='Категория')
-    description = models.TextField(verbose_name='Описание вещи')
+    description = models.TextField(blank=True, null=True, verbose_name='Описание вещи')
     price = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='Цена')
     sale_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True, verbose_name='Цена со скидкой')
     sizes = models.ManyToManyField('Size', through='SizeItemCount')
