@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -15,8 +16,12 @@ class ItemViewSet(viewsets.ModelViewSet):
     filterset_fields = ['category']
 
     def get_queryset(self):
-        return Item.objects.prefetch_related('images', 'sizes_count', 'sizes_count__size').select_related(
+        queryset = Item.objects.prefetch_related('images', 'sizes_count', 'sizes_count__size').select_related(
             'category').all()
+        only_available = self.request.query_params.get('available', None)
+        if only_available is not None:
+            return queryset.annotate(sum_count=Sum('sizes_count__item_count')).filter(sum_count__gt=0)
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ['update', 'partial_update']:

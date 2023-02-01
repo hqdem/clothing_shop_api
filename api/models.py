@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 
 SIZE_CHOICES = (
@@ -72,6 +73,11 @@ class Item(models.Model):
 
     def __str__(self):
         return self.name
+
+    def is_available(self):
+        if not len(self.sizes_count.filter(~Q(item_count=0))):
+            return False
+        return True
 
 
 class OrderItem(models.Model):
