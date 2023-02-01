@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ..models import Size, SizeItemCount, Item
+from ..models import Size
 
 
 class SizeSerializer(serializers.ModelSerializer):
@@ -9,18 +9,6 @@ class SizeSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'size'
-        ]
-
-
-class SizeItemCountSerializer(serializers.ModelSerializer):
-    size = SizeSerializer()
-
-    class Meta:
-        model = Item.sizes.through
-        fields = [
-            'id',
-            'size',
-            'item_count'
         ]
 
 
