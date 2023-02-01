@@ -86,10 +86,6 @@ class ItemViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get'])
-    def check_availability(self, request, pk):
-        pass
-
-    @action(detail=True, methods=['get'])
     def get_available_sizes(self, request, pk):
         item = self.get_object()
         size = request.query_params.get('size', None)
