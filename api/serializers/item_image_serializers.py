@@ -12,3 +12,13 @@ class ItemImageSerializer(serializers.ModelSerializer):
             'id',
             'image_url'
         ]
+
+
+class CreateItemImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField()
+
+    class Meta:
+        model = ItemImage
+        fields = [
+            'image'
+        ]
