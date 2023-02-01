@@ -132,3 +132,8 @@ AUTH_USER_MODEL = 'accounts.User'
 INTERNAL_IPS = [
     '127.0.0.1'
 ]
+
+# REST_FRAMEWORK
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'api.paginations.LimitResultsPagination',
+}
