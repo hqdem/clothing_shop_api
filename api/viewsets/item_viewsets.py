@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from ..models import Item, Size, SizeItemCount, ItemImage
 from ..serializers.item_serializers import ItemSerializer, ItemCreateSerializer, ItemUpdateSerializer
-from ..serializers.size_serializers import SizeCountSerializer
+from ..serializers.size_serializers import SizeCountSerializer, SizeSerializer
 from ..serializers.item_image_serializers import CreateItemImageSerializer
 
 
@@ -28,7 +28,7 @@ class ItemViewSet(viewsets.ModelViewSet):
             return ItemUpdateSerializer
         elif self.action == 'create':
             return ItemCreateSerializer
-        elif self.action == 'change_size_count':
+        elif self.action in ['change_size_count', 'get_available_sizes']:
             return SizeCountSerializer
         elif self.action == 'add_photo':
             return CreateItemImageSerializer
@@ -84,3 +84,22 @@ class ItemViewSet(viewsets.ModelViewSet):
             ItemImage.objects.bulk_create(images_obj_list)
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def check_availability(self, request, pk):
+        pass
+
+    @action(detail=True, methods=['get'])
+    def get_available_sizes(self, request, pk):
+        item = self.get_object()
+        size = request.query_params.get('size', None)
+
+        if size is not None:
+            size_serializer = SizeSerializer(data={"size": size})
+            if not size_serializer.is_valid():
+                return Response(size_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            queryset = item.get_available_sizes(size=size)
+        else:
+            queryset = item.get_available_sizes()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

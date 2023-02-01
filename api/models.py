@@ -79,6 +79,11 @@ class Item(models.Model):
             return False
         return True
 
+    def get_available_sizes(self, size=None):
+        if size is not None:
+            return self.sizes_count.prefetch_related('size').filter(item_count__gt=0, size__size=size).all()
+        return self.sizes_count.prefetch_related('size').filter(item_count__gt=0).all()
+
 
 class OrderItem(models.Model):
     item = models.ForeignKey('Item', on_delete=models.PROTECT, related_name='orders', verbose_name='Вещь')
