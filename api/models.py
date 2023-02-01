@@ -35,7 +35,7 @@ class Size(models.Model):
 
 class SizeItemCount(models.Model):
     size = models.ForeignKey('Size', on_delete=models.PROTECT, related_name='items_count', verbose_name='Размер')
-    item = models.ForeignKey('Item', on_delete=models.PROTECT, related_name='sizes_count', verbose_name='Вещь')
+    item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='sizes_count', verbose_name='Вещь')
     item_count = models.IntegerField(verbose_name='Количество')
 
     class Meta:
