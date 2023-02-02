@@ -1,7 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 
 from ..models import Order
-from ..serializers.order_serializers import OrderSerializer
+from ..serializers.order_serializers import OrderSerializer, OrderCreateSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -9,4 +10,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.prefetch_related('order_items__item', 'order_items__size').all()
 
     def get_serializer_class(self):
+        if self.action == 'create':
+            return OrderCreateSerializer
         return OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        serializer = self.get_serializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
