@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.response import Response
 
 from ..models import Order, OrderItem, SIZE_CHOICES, Item, Size
 
@@ -52,16 +53,24 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        print(validated_data)
-        items = validated_data.pop('items')
+        items_info = validated_data.pop('items')
         order = Order.objects.create(user_email=validated_data['user_email'],
                                      user_contacts=validated_data['user_contacts'])
+        item_ids = [item_info['id'] for item_info in items_info]
+        item_sizes = [item_info['size'] for item_info in items_info]
+
+        items = Item.objects.filter(id__in=item_ids)
+        sizes = Size.objects.filter(size__in=item_sizes)
+
+        if len(items) != len(set(item_ids)):
+            return Response({'detail': 'One of the items has wrong id'}, status=status.HTTP_400_BAD_REQUEST)
 
         order_obj_list = []
-        for item_info in items:
-            item = get_object_or_404(Item, id=item_info['id'])
-            size = get_object_or_404(Size, size=item_info['size'])
-            order_obj_list.append(OrderItem(order=order, item=item, size=size, item_count=item_info['item_count']))
-
+        for item_info in items_info:
+            for item in items:
+                for size in sizes:
+                    if item_info['size'] == size.size and item_info['id'] == item.id:
+                        order_obj_list.append(OrderItem(order=order, item=item, size=size, item_count=item_info['item_count']))
         OrderItem.objects.bulk_create(order_obj_list)
+
         return order

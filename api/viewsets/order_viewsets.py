@@ -19,6 +19,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
 
         if serializer.is_valid():
-            serializer.save()
+            item = serializer.save()
+            if isinstance(item, Response):
+                return item
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
