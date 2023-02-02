@@ -54,9 +54,20 @@ class ItemCreateSerializer(serializers.ModelSerializer):
         category = get_object_or_404(Category, id=validated_data['category_id'])
         item = Item.objects.create(category=category, **validated_data)
 
-        for size in sizes_count:
-            item_size = get_object_or_404(Size, size=size['size'])
-            SizeItemCount.objects.create(item=item, size=item_size, item_count=size['item_count'])
+        size_names = [size_info['size'] for size_info in sizes_count]
+        sizes = Size.objects.filter(size__in=size_names)
+
+        sizes_count_list = []
+        for size in sizes:
+            for size_count in sizes_count:
+                if size_count['size'] == size.size:
+                    sizes_count_list.append((size, size_count['item_count']))
+
+        size_item_count_obj_list = []
+        for size_to_count in sizes_count_list:
+            size_item_count_obj_list.append(SizeItemCount(item=item, size=size_to_count[0], item_count=size_to_count[1]))
+        SizeItemCount.objects.bulk_create(size_item_count_obj_list)
+
         return item
 
 
