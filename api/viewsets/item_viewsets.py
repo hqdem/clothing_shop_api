@@ -17,7 +17,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Item.objects.prefetch_related('images', 'sizes_count', 'sizes_count__size').select_related(
-            'category').all()
+            'category').annotate(sum_count=Sum('sizes_count__item_count')).all()
         only_available = self.request.query_params.get('available', None)
         if only_available is not None:
             return queryset.annotate(sum_count=Sum('sizes_count__item_count')).filter(sum_count__gt=0)

@@ -11,6 +11,7 @@ class ItemSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     sizes = SizeCountSerializer(many=True, source='sizes_count')
     item_images = ItemImageSerializer(many=True, source='images')
+    is_available = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Item
@@ -21,9 +22,15 @@ class ItemSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'sale_price',
+            'is_available',
             'sizes',
             'item_images'
         ]
+
+    def get_is_available(self, obj):
+        if not obj.sum_count:
+            return False
+        return True
 
 
 class ItemCreateSerializer(serializers.ModelSerializer):
