@@ -1,8 +1,8 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
-from ..models import Order, OrderItem, SIZE_CHOICES, Item, Size
+from ..models import Order, OrderItem, SIZE_CHOICES, Item, Size, ORDER_STATUS_CHOICES
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -38,6 +38,16 @@ class OrderSerializer(serializers.ModelSerializer):
             'order_status',
             'items'
         ]
+
+
+class OrderSizeSerializer(serializers.Serializer):
+    order_status = serializers.CharField(max_length=10)
+
+    def validate_order_status(self, value):
+        order_status_choices = [order_status_info[0] for order_status_info in ORDER_STATUS_CHOICES]
+        if value not in order_status_choices:
+            raise ValidationError(f'{value} is incorrect order status')
+        return value
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
