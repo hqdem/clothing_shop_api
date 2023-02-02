@@ -94,7 +94,7 @@ class Item(models.Model):
 
 class OrderItem(models.Model):
     item = models.ForeignKey('Item', on_delete=models.PROTECT, related_name='orders', verbose_name='Вещь')
-    order = models.ForeignKey('Order', on_delete=models.PROTECT, related_name='order_items', verbose_name='Заказ')
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items', verbose_name='Заказ')
     # size = models.CharField(max_length=10, choices=SIZE_CHOICES, verbose_name='Размер')
     size = models.ForeignKey('Size', on_delete=models.PROTECT, related_name='orders', verbose_name='Размер')
     item_count = models.IntegerField(verbose_name='Количество')
