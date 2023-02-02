@@ -131,9 +131,32 @@ class ItemViewSet(viewsets.ModelViewSet):
 
             if len(error_items_msg):
                 return Response({'errors': error_items_msg}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def check_items_price(self, request):
-        pass
+        data = request.data
+        serializer = self.get_serializer(data=data, many=True)
+        if serializer.is_valid():
+            vd = serializer.validated_data
+            item_ids = [item['item_id'] for item in vd]
+
+            items = Item.objects.filter(id__in=item_ids)
+            if len(items) != len(set(item_ids)):
+                return Response({'detail': 'One of product ids is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+            error_items_msg = []
+            for item in items:
+                item_id = item.id
+                for request_item in vd:
+                    if item_id == request_item['item_id']:
+                        sale_price = item.sale_price
+                        price = sale_price if sale_price else item.price
+                        if price != request_item['price']:
+                            error_items_msg.append({'detail': f'Incorrect price for {item.name}. Correct price is {price}'})
+
+            if len(error_items_msg):
+                return Response({'errors': error_items_msg}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
