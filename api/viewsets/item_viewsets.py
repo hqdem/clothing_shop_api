@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from ..models import Item, Size, SizeItemCount, ItemImage
-from ..serializers.item_serializers import ItemSerializer, ItemCreateSerializer, ItemUpdateSerializer
+from ..serializers.item_serializers import ItemSerializer, ItemCreateSerializer, ItemUpdateSerializer, ItemProcessCartSerializer
 from ..serializers.size_serializers import SizeCountSerializer, SizeSerializer
 from ..serializers.item_image_serializers import CreateItemImageSerializer
 
@@ -32,6 +32,8 @@ class ItemViewSet(viewsets.ModelViewSet):
             return SizeCountSerializer
         elif self.action == 'add_photo':
             return CreateItemImageSerializer
+        elif self.action in ['check_items_availability', 'check_items_price']:
+            return ItemProcessCartSerializer
         return ItemSerializer
 
     def update(self, request, *args, **kwargs):
@@ -99,3 +101,39 @@ class ItemViewSet(viewsets.ModelViewSet):
             queryset = item.get_available_sizes()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def check_items_availability(self, request):
+        data = request.data
+        serializer = self.get_serializer(data=data, many=True)
+        if serializer.is_valid():
+            vd = serializer.validated_data
+            item_ids = [item['item_id'] for item in vd]
+
+            items = Item.objects.filter(id__in=item_ids)
+            if len(items) != len(set(item_ids)):
+                return Response({'detail': 'One of product ids is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+            error_items_msg = []
+            for item in items:
+                item_id = item.id
+                for request_item in vd:
+                    if item_id == request_item['item_id']:
+                        try:
+                            size_count = item.get_available_sizes(size=request_item['size'])[0]
+                        except IndexError:
+                            error_items_msg.append({'detail': f"{item.name} - {request_item['size']} isn't available"})
+                            continue
+
+                        max_count = size_count.item_count
+                        if max_count < request_item['count']:
+                            error_items_msg.append({'detail': f"{item.name} - {request_item['size']} isn't available. Maximum count is {max_count}"})
+
+            if len(error_items_msg):
+                return Response({'errors': error_items_msg}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def check_items_price(self, request):
+        pass

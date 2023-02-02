@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from ..models import Item, Category, Size, SizeItemCount
+from ..models import Item, Category, Size, SizeItemCount, SIZE_CHOICES
 from ..serializers.size_serializers import SizeCountSerializer
 from ..serializers.category_serializers import CategorySerializer
 from ..serializers.item_image_serializers import ItemImageSerializer
@@ -91,3 +91,24 @@ class ItemUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class ItemProcessCartSerializer(serializers.ModelSerializer):
+    item_id = serializers.IntegerField()
+    count = serializers.IntegerField(required=True)
+    size = serializers.CharField(max_length=10)
+
+    class Meta:
+        model = Item
+        fields = [
+            'item_id',
+            'size',
+            'count',
+            'price'
+        ]
+
+    def validate_size(self, value):
+        size_choices = [size[0] for size in SIZE_CHOICES]
+        if value not in size_choices:
+            raise serializers.ValidationError(f'{value} is incorrect size')
+        return value
