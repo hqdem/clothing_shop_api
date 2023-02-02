@@ -54,7 +54,7 @@ class ItemViewSet(viewsets.ModelViewSet):
             item = serializer.save()
             if isinstance(item, Response):
                 return item
-            return Response(ItemSerializer(item).data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
