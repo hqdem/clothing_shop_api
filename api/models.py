@@ -11,6 +11,13 @@ SIZE_CHOICES = (
     ('xs', 'xs')
 )
 
+ORDER_STATUS_CHOICES = (
+    ('waiting', 'waiting'),
+    ('created', 'created'),
+    ('canceled', 'canceled'),
+    ('done', 'done')
+)
+
 
 class Category(models.Model):
     name = models.CharField(max_length=127, verbose_name='Категория')
@@ -88,7 +95,8 @@ class Item(models.Model):
 class OrderItem(models.Model):
     item = models.ForeignKey('Item', on_delete=models.PROTECT, related_name='orders', verbose_name='Вещь')
     order = models.ForeignKey('Order', on_delete=models.PROTECT, related_name='order_items', verbose_name='Заказ')
-    size = models.CharField(max_length=10, choices=SIZE_CHOICES, verbose_name='Размер')
+    # size = models.CharField(max_length=10, choices=SIZE_CHOICES, verbose_name='Размер')
+    size = models.ForeignKey('Size', on_delete=models.PROTECT, related_name='orders', verbose_name='Размер')
     item_count = models.IntegerField(verbose_name='Количество')
 
     class Meta:
@@ -102,6 +110,7 @@ class OrderItem(models.Model):
 class Order(models.Model):
     user_email = models.EmailField(verbose_name='Email пользователя')
     user_contacts = models.CharField(max_length=127, verbose_name='Контакты пользователя')
+    order_status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default='waiting', verbose_name='Статус')
     items = models.ManyToManyField('Item', through='OrderItem')
 
     class Meta:
