@@ -54,8 +54,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         items_info = validated_data.pop('items')
-        order = Order.objects.create(user_email=validated_data['user_email'],
-                                     user_contacts=validated_data['user_contacts'])
+
         item_ids = [item_info['id'] for item_info in items_info]
         item_sizes = [item_info['size'] for item_info in items_info]
 
@@ -64,6 +63,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         if len(items) != len(set(item_ids)):
             return Response({'detail': 'One of the items has wrong id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = Order.objects.create(user_email=validated_data['user_email'],
+                                     user_contacts=validated_data['user_contacts'])
 
         order_obj_list = []
         for item_info in items_info:

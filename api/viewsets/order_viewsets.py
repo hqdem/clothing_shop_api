@@ -1,11 +1,13 @@
 from rest_framework import viewsets, status
+from rest_framework import mixins
 from rest_framework.response import Response
 
 from ..models import Order
 from ..serializers.order_serializers import OrderSerializer, OrderCreateSerializer
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
+                   mixins.DestroyModelMixin):
     def get_queryset(self):
         return Order.objects.prefetch_related('order_items__item', 'order_items__size').all()
 
