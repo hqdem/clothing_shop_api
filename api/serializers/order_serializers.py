@@ -6,18 +6,30 @@ from ..models import Order, OrderItem, SIZE_CHOICES, Item, Size, ORDER_STATUS_CH
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    item_id = serializers.IntegerField(source='item.id')
     name = serializers.CharField(source='item.name', read_only=True)
     size = serializers.CharField(max_length=10)
 
     class Meta:
         model = OrderItem
         fields = [
-            'id',
+            'item_id',
             'name',
             'size',
             'item_count'
         ]
+
+    def validate_size(self, value):
+        size_choices = [size[0] for size in SIZE_CHOICES]
+        if value not in size_choices:
+            raise serializers.ValidationError(f'{value} is incorrect size')
+        return value
+
+
+class OrderItemCreateSerializer(serializers.Serializer):
+    item_id = serializers.IntegerField()
+    size = serializers.CharField(max_length=10)
+    item_count = serializers.IntegerField()
 
     def validate_size(self, value):
         size_choices = [size[0] for size in SIZE_CHOICES]
@@ -51,21 +63,21 @@ class OrderSizeSerializer(serializers.Serializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True)
+    items = OrderItemCreateSerializer(many=True)
 
     class Meta:
         model = Order
         fields = [
             'user_email',
             'user_contacts',
-            'order_status',
             'items'
         ]
 
     def create(self, validated_data):
+        print(validated_data)
         items_info = validated_data.pop('items')
 
-        item_ids = [item_info['id'] for item_info in items_info]
+        item_ids = [item_info['item_id'] for item_info in items_info]
         item_sizes = [item_info['size'] for item_info in items_info]
 
         items = Item.objects.filter(id__in=item_ids)
@@ -81,7 +93,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         for item_info in items_info:
             for item in items:
                 for size in sizes:
-                    if item_info['size'] == size.size and item_info['id'] == item.id:
+                    if item_info['size'] == size.size and item_info['item_id'] == item.id:
                         order_obj_list.append(OrderItem(order=order, item=item, size=size, item_count=item_info['item_count']))
         OrderItem.objects.bulk_create(order_obj_list)
 
