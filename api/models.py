@@ -111,6 +111,8 @@ class Order(models.Model):
     user_email = models.EmailField(verbose_name='Email пользователя')
     user_contacts = models.CharField(max_length=127, verbose_name='Контакты пользователя')
     order_status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default='waiting', verbose_name='Статус')
+    payment_id = models.UUIDField(blank=True, null=True, verbose_name='ID платежа')
+    payment_url = models.URLField(blank=True, null=True, verbose_name='URL платежа')
     items = models.ManyToManyField('Item', through='OrderItem')
 
     class Meta:

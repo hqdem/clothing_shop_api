@@ -40,6 +40,7 @@ class OrderItemCreateSerializer(serializers.Serializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, source='order_items')
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -48,8 +49,19 @@ class OrderSerializer(serializers.ModelSerializer):
             'user_email',
             'user_contacts',
             'order_status',
+            'payment_id',
+            'payment_url',
+            'total_price',
             'items'
         ]
+
+    def get_total_price(self, obj):
+        total_price = 0
+        for order_item in obj.order_items.all():
+            item = order_item.item
+            price = item.sale_price if item.sale_price else item.price
+            total_price += price * order_item.item_count
+        return total_price
 
 
 class OrderSizeSerializer(serializers.Serializer):
@@ -74,7 +86,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        print(validated_data)
         items_info = validated_data.pop('items')
 
         item_ids = [item_info['item_id'] for item_info in items_info]
@@ -94,7 +105,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             for item in items:
                 for size in sizes:
                     if item_info['size'] == size.size and item_info['item_id'] == item.id:
-                        order_obj_list.append(OrderItem(order=order, item=item, size=size, item_count=item_info['item_count']))
+                        order_obj_list.append(
+                            OrderItem(order=order, item=item, size=size, item_count=item_info['item_count']))
         OrderItem.objects.bulk_create(order_obj_list)
 
         return order
