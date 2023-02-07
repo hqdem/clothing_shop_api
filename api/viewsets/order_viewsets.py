@@ -1,3 +1,4 @@
+from django.db.models import prefetch_related_objects
 from rest_framework import viewsets, status
 from rest_framework import mixins
 from rest_framework.decorators import action
@@ -40,7 +41,8 @@ class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retrie
             item.payment_url = payment.confirmation.confirmation_url
             item.save()
 
-            return Response(status=status.HTTP_201_CREATED)
+            prefetch_related_objects([item], 'order_items__item', 'order_items__size')
+            return Response(OrderSerializer(item).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])

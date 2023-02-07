@@ -1,3 +1,4 @@
+from django.db.models import prefetch_related_objects
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
@@ -95,6 +96,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         sizes = Size.objects.filter(size__in=item_sizes)
 
         if len(items) != len(set(item_ids)):
+            prefetch_related_objects(items)
             return Response({'detail': 'One of the items has wrong id'}, status=status.HTTP_400_BAD_REQUEST)
 
         order = Order.objects.create(user_email=validated_data['user_email'],
@@ -108,5 +110,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                         order_obj_list.append(
                             OrderItem(order=order, item=item, size=size, item_count=item_info['item_count']))
         OrderItem.objects.bulk_create(order_obj_list)
+
+        prefetch_related_objects([order], 'order_items__item')  # for not duplicating select items
 
         return order
