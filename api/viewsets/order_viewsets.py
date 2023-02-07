@@ -1,10 +1,11 @@
 from django.db.models import prefetch_related_objects
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import Order
+from ..models import Order, SizeItemCount
 from ..serializers.order_serializers import OrderSerializer, OrderCreateSerializer, OrderSizeSerializer
 from ..external.yookassa_client import create_payment, find_payment
 
@@ -61,6 +62,9 @@ class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retrie
     def confirm_payment(self, request, pk):
         order = self.get_object()
 
+        if order.order_status == 'crated':
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         payment_id = str(order.payment_id)
         payment = find_payment(payment_id)
 
@@ -68,6 +72,20 @@ class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retrie
 
         if payment_status == 'succeeded':
             order.order_status = 'created'
+
+            try:
+                with transaction.atomic():
+                    items_sizes_count_obj_list = []
+                    for order_item in order.order_items.all():
+                        size_count = SizeItemCount.objects.get(size=order_item.size, item=order_item.item)
+
+                        size_count.item_count -= order_item.item_count
+                        items_sizes_count_obj_list.append(size_count)
+                    SizeItemCount.objects.bulk_update(items_sizes_count_obj_list, ['item_count'])
+            except Exception as ex:
+                print(ex)
+                pass  # could do smth with user's money
+
             order.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         if payment_status == 'canceled':
