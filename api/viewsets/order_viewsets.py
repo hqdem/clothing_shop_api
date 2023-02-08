@@ -5,7 +5,7 @@ from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import Order, SizeItemCount
+from ..models import Order, SizeItemCount, Item
 from ..serializers.order_serializers import OrderSerializer, OrderCreateSerializer, OrderSizeSerializer
 from ..external.yookassa_client import create_payment, find_payment
 
@@ -76,11 +76,16 @@ class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retrie
             try:
                 with transaction.atomic():
                     items_sizes_count_obj_list = []
-                    for order_item in order.order_items.all():
-                        size_count = SizeItemCount.objects.get(size=order_item.size, item=order_item.item)
+                    items_id = [order_item.item.id for order_item in order.order_items.all()]
+                    items = Item.objects.prefetch_related('sizes_count', 'sizes_count__size').select_related(
+                        'category').filter(id__in=items_id)
 
-                        size_count.item_count -= order_item.item_count
-                        items_sizes_count_obj_list.append(size_count)
+                    for order_item in order.order_items.all():
+                        for item in items:
+                            for size_count in item.sizes_count.all():
+                                if order_item.size == size_count.size:
+                                    size_count.item_count -= order_item.item_count
+                                    items_sizes_count_obj_list.append(size_count)
                     SizeItemCount.objects.bulk_update(items_sizes_count_obj_list, ['item_count'])
             except Exception as ex:
                 print(ex)
@@ -91,4 +96,5 @@ class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retrie
         if payment_status == 'canceled':
             order.order_status = 'canceled'
             order.save()
-        return Response({'detail': f'Not succeeded status. Status is {payment_status}'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+        return Response({'detail': f'Not succeeded status. Status is {payment_status}'},
+                        status=status.HTTP_402_PAYMENT_REQUIRED)
