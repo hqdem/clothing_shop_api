@@ -16,7 +16,7 @@ def create_payment(amount):
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": f"http://localhost:8000/api/v1/orders/confirm_payment/"
+            "return_url": f"http://127.0.0.1:5173/confirm"
         },
         "capture": True,
         "description": "Заказ №1"
