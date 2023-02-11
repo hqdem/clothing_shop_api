@@ -62,7 +62,7 @@ class OrderViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retrie
     def confirm_payment(self, request, pk):
         order = self.get_object()
 
-        if order.order_status == 'crated':
+        if order.order_status == 'created':
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         payment_id = str(order.payment_id)
